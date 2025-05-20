@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qubit_zz_coupling"
+version = "0.1.0"
+description = "A package for simulating T1 measurements in qubit systems with ZZ coupling."
+authors = [{ name = "Your Name", email = "your.email@example.com" }]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "qutip",
+    "scipy"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
