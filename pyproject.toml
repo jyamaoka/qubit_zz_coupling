@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qubit_zz_coupling"
+version = "0.1.0"
+description = "A package for simulating qubit dynamics with ZZ coupling."
+authors = [{ name = "Jared Yamaoka", email = "jared.yamaoka@outlook.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "qutip>=1.0.0",
+    "scipy>=1.15.0"
+]
+
+[tool.setuptools]
+packages = ["qubit_zz_coupling"]
+
+[project.optional-dependencies]
+testing = [
+    "pytest",
+    "pytest-cov",
+]
