@@ -4,6 +4,8 @@ from qutip import basis, tensor, sigmaz, sigmax, sigmam, mesolve, identity, Qobj
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
+from qtt.algorithms.functions import fit_gauss_ramsey
+
 from typing import Dict, Tuple, List, Any, Union
 
 def setup_operators(
@@ -124,7 +126,8 @@ def solve_t2(
     c_ops: List[Qobj],
     e_ops: List[Qobj],
     first_guess: List[float],
-    ret_pop: bool = False
+    ret_pop: bool = False,
+    use_fit_gauss: bool = False
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """
     Solve the T2 (Ramsey) problem and fit the result to the Ramsey decay function.
@@ -143,6 +146,9 @@ def solve_t2(
     """
     result = mesolve(H, psi0, tlist, c_ops, e_ops=e_ops)
     pop = make_population(result.expect[0])
+    if use_fit_gauss:
+        first_guess, _ = fit_gauss_ramsey(tlist, pop)
+        
     fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess)
     return fit_par if not ret_pop else (fit_par, pop)
 
