@@ -8,6 +8,12 @@ from qtt.algorithms.functions import fit_gauss_ramsey
 
 from typing import Dict, Tuple, List, Any, Union
 
+def rwaCoupling(m1, m2):
+    """
+    coupling
+    """
+    return m1.dag()*m2 + m1*m2.dag()
+
 def setup_operators(
     system_params: Dict[str, Any]
 ) -> Tuple[Qobj, List[Qobj], Qobj, Qobj, Qobj, Qobj]:
@@ -44,15 +50,18 @@ def setup_operators(
     H_XX = 2 * np.pi * system_params["Jxx"] * sx_q1 * sx_q2
     H_Q1_TLS = 2 * np.pi * system_params["JTLS"] * sz_q1 * sz_tls
 
-    H = H_Q1 + H_Q2 + H_ZZ + H_TLS + H_Q1_TLS + H_XX
+    # xtalk
+    H_xtalk = 2 * np.pi * system_params["Jxx"] * rwaCoupling(sz_q1,sz_q2)
+
+    H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS + H_XX + H_xtalk
 
     c_ops = [
         np.sqrt(system_params["relaxation"]["q1"]) * sm_q1,
-        np.sqrt(system_params["dephasing"]["q1"] / 2) * sz_q1,
+        np.sqrt(system_params["dephasing"]["q1"]) * sz_q1,
         np.sqrt(system_params["relaxation"]["q2"]) * sm_q2,
-        np.sqrt(system_params["dephasing"]["q2"] / 2) * sz_q2,
+        np.sqrt(system_params["dephasing"]["q2"]) * sz_q2,
         np.sqrt(system_params["relaxation"]["TLS"]) * sm_tls,
-        np.sqrt(system_params["dephasing"]["TLS"] / 2) * sz_tls,
+        np.sqrt(system_params["dephasing"]["TLS"]) * sz_tls,
     ]
 
     return H, c_ops, sz_q1, sz_q2, sx_q1, sx_q2 
@@ -146,6 +155,7 @@ def solve_t2(
     """
     result = mesolve(H, psi0, tlist, c_ops, e_ops=e_ops)
     pop = make_population(result.expect[0])
+    pop = result.expect[0]
     if use_fit_gauss:
         first_guess, _ = fit_gauss_ramsey(tlist, pop)
         
@@ -180,8 +190,8 @@ def plot_t2(
     """
     fit_par, pop = solve_t2(H, psi0, tlist, c_ops, e_ops, first_guess, ret_pop=True)
     fig, ax = plt.subplots()
-    ax.plot(tlist, pop, 'bo', alpha=0.5, label='Data')
-    ax.plot(tlist, ramsey(tlist, *fit_par), 'r-', label=f'Fit: T2 = {fit_par[1]:.2f} μs')
+    ax.plot(tlist, pop, '-bo', alpha=0.5, label='Data')
+    ax.plot(tlist, ramsey(tlist, *fit_par), 'r-', label=f'Fit: T2 = {fit_par[1]:.2f} μs, f = {fit_par[2]}')
     ax.set_title(f'T2 - {label_Qbit} (Jzztls = {system_params["JTLS"]}, Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
     ax.set_xlabel('Time (μs)')
     ax.set_ylabel('Population |1⟩')
