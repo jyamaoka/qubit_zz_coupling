@@ -155,7 +155,7 @@ def solve_t2(
     """
     result = mesolve(H, psi0, tlist, c_ops, e_ops=e_ops)
     pop = make_population(result.expect[0])
-    pop = result.expect[0]
+
     if use_fit_gauss:
         first_guess, _ = fit_gauss_ramsey(tlist, pop)
         
@@ -190,7 +190,7 @@ def plot_t2(
     """
     fit_par, pop = solve_t2(H, psi0, tlist, c_ops, e_ops, first_guess, ret_pop=True)
     fig, ax = plt.subplots()
-    ax.plot(tlist, pop, '-bo', alpha=0.5, label='Data')
+    ax.plot(tlist, pop, 'bo', alpha=0.5, label='Data')
     ax.plot(tlist, ramsey(tlist, *fit_par), 'r-', label=f'Fit: T2 = {fit_par[1]:.2f} μs, f = {fit_par[2]}')
     ax.set_title(f'T2 - {label_Qbit} (Jzztls = {system_params["JTLS"]}, Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
     ax.set_xlabel('Time (μs)')
