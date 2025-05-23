@@ -51,7 +51,7 @@ def setup_operators(
     H_Q1_TLS = 2 * np.pi * system_params["JTLS"] * sz_q1 * sz_tls
 
     # xtalk
-    H_xtalk = 2 * np.pi * system_params["Jxx"] * rwaCoupling(sz_q1,sz_q2)
+    H_xtalk = 2 * np.pi * system_params["Jxt"] * rwaCoupling(sz_q1,sz_q2)
 
     H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS + H_XX + H_xtalk
 
@@ -121,7 +121,7 @@ def plot_t1(
     fig, ax = plt.subplots()
     ax.plot(tlist, pop, 'bo', alpha=0.5, label='Data')
     ax.plot(tlist, exp_decay(tlist, *fit_par), 'r-', label=f'Fit: T1 = {fit_par[1]:.2f} μs')
-    ax.set_title(f'T1 - {label_Qbit} (Jzztls = {system_params["JTLS"]}, Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
+    ax.set_title(f'T1 - {label_Qbit} (JTLS = {system_params["JTLS"]}, Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
     ax.set_xlabel('Time (μs)')
     ax.set_ylabel('Population |1⟩')
     ax.legend()
@@ -192,7 +192,7 @@ def plot_t2(
     fig, ax = plt.subplots()
     ax.plot(tlist, pop, 'bo', alpha=0.5, label='Data')
     ax.plot(tlist, ramsey(tlist, *fit_par), 'r-', label=f'Fit: T2 = {fit_par[1]:.2f} μs, f = {fit_par[2]}')
-    ax.set_title(f'T2 - {label_Qbit} (Jzztls = {system_params["JTLS"]}, Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
+    ax.set_title(f'T2 - {label_Qbit} (JTLS = {system_params["JTLS"]}, Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
     ax.set_xlabel('Time (μs)')
     ax.set_ylabel('Population |1⟩')
     ax.legend()
