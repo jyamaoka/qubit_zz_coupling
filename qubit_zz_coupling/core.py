@@ -53,6 +53,9 @@ def setup_operators(
     # xtalk
     H_xtalk = 2 * np.pi * system_params["Jxt"] * rwaCoupling(sz_q1,sz_q2)
 
+    # time dependance 
+    #H_t = 
+
     H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS + H_XX + H_xtalk
 
     c_ops = [
