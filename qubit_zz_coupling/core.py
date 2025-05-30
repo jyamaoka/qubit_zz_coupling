@@ -160,9 +160,11 @@ def solve_t2(
     pop = make_population(result.expect[0])
 
     if use_fit_gauss:
-        first_guess, _ = fit_gauss_ramsey(tlist, pop)
-        
-    fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess)
+        fit_par, _ = fit_gauss_ramsey(tlist, pop)
+    else:
+        fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess, bounds=([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf], [np.inf, np.inf, np.inf, 10.0, np.inf]))
+        #fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess)
+
     return fit_par if not ret_pop else (fit_par, pop)
 
 def plot_t2(
@@ -173,7 +175,8 @@ def plot_t2(
     e_ops: List[Qobj],
     first_guess: List[float],
     label_Qbit: str,
-    system_params: Dict[str, Any]
+    system_params: Dict[str, Any],
+    use_fit_gauss: bool=False
 ) -> plt.Axes:
     """
     Plot T2 (Ramsey) data and fit.
@@ -191,7 +194,9 @@ def plot_t2(
     Returns:
         Matplotlib Axes object
     """
-    fit_par, pop = solve_t2(H, psi0, tlist, c_ops, e_ops, first_guess, ret_pop=True)
+    fit_par, pop = solve_t2(H, psi0, tlist, c_ops, e_ops, first_guess, ret_pop=True, use_fit_gauss=use_fit_gauss)
+
+    print(fit_par)
     fig, ax = plt.subplots()
     ax.plot(tlist, pop, 'bo', alpha=0.5, label='Data')
     ax.plot(tlist, ramsey(tlist, *fit_par), 'r-', label=f'Fit: T2 = {fit_par[1]:.2f} μs, f = {fit_par[2]}')
