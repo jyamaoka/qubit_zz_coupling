@@ -160,10 +160,11 @@ def solve_t2(
     pop = make_population(result.expect[0])
 
     if use_fit_gauss:
-        fit_par, _ = fit_gauss_ramsey(tlist, pop)
-    else:
-        fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess, bounds=([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf], [np.inf, np.inf, np.inf, 10.0, np.inf]))
-        #fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess)
+        first_guess, _ = fit_gauss_ramsey(tlist, pop)
+    #else:
+    #    fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess, bounds=([-np.inf, -np.inf, -np.inf, -np.inf, -np.inf], [np.inf, np.inf, np.inf, 10.0, np.inf]))
+        
+    fit_par, _ = curve_fit(ramsey, tlist, pop, p0=first_guess)
 
     return fit_par if not ret_pop else (fit_par, pop)
 
