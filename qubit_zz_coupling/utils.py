@@ -41,4 +41,4 @@ def ramsey(t: np.ndarray, A: float, T2_star: float, f: float, phi: float, C: flo
     Returns:
         Ramsey signal as a numpy array.
     """
-    return A * np.exp(-t/T2_star) * np.cos(2*np.pi*f*t + phi) + C
+    return A * np.exp(-t/T2_star) * np.cos((2*np.pi*f*t) + phi) + C
