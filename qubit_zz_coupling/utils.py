@@ -63,7 +63,8 @@ def fq_shift(
     v0: float,
     T: float,
     phi: float = 0,
-    jump: bool = False
+    jump: bool = False,
+    noise_level: float = 0
 ) -> Union[float, np.ndarray]:
     """
     Calculate a frequency shift as a sinusoidal function of time.
@@ -75,12 +76,12 @@ def fq_shift(
         T: Period of the modulation.
         phi: Phase offset (default 0).
         jump: Make piece wise jumps (default False)
-
+        add_noise: Add noise (default False)
     Returns:
         Frequency shift at time(s) t.
     """
-    if (jump):
-
-        return f0 - (v0 * np.sign(np.sin((2 * np.pi * t / T) + phi)))
+    if jump:
+        noise = np.random.normal(loc=0, scale=noise_level, size=len(t))  # Samples of Gaussian noise
+        return f0 - ((1-noise) * v0 * np.sign(np.sin((2 * np.pi * t / T) + phi + .01)))
     
     return f0 - (v0 * np.sin((2 * np.pi * t / T) + phi))
