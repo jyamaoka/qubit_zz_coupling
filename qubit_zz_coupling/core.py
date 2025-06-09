@@ -15,7 +15,6 @@ def rwaCoupling(m1, m2):
     """
     return m1.dag()*m2 + m1*m2.dag()
 
-#def drive():
 
 
 def setup_operators(
@@ -55,9 +54,10 @@ def setup_operators(
     H_Q1_TLS = 2 * np.pi * system_params["JTLS"] * sz_q1 * sz_tls
 
     # xtalk
-    H_xtalk = 2 * np.pi * system_params["Jxt"] * rwaCoupling(sz_q1,sz_q2) # not used yet
+    H_xtalk_tls = 2 * np.pi * system_params["Jxttls"] * rwaCoupling(sm_q1, sm_tls) # not used yet
+    H_xtalk_q1q2 = 2 * np.pi * system_params["Jxtqq"] * rwaCoupling(sm_q1, sm_q2) # not used yet
 
-    H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS + H_XX + H_xtalk
+    H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS + H_XX + H_xtalk_tls + H_xtalk_q1q2
 
     c_ops = [
         np.sqrt(system_params["relaxation"]["q1"]) * sm_q1,
