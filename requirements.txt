@@ -1,5 +1,8 @@
+git+https://github.com/jyamaoka/qilib.git#egg=qilib
+git+https://github.com/jyamaoka/qtt.git#egg=qtt
 qutip
 matplotlib
 numpy
 scipy
+tqdm
 pytest

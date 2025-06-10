@@ -10,7 +10,7 @@ authors = [{ name = "Jared Yamaoka", email = "jared.yamaoka@outlook.com" }]
 requires-python = ">=3.9"
 dependencies = [
     "qutip>=1.0.0",
-    "scipy>=1.15.0"
+    "scipy"
 ]
 
 [tool.setuptools]
