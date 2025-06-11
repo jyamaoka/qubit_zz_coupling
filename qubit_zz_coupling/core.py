@@ -25,7 +25,7 @@ def rwaCoupling(operator0: Qobj, operator1: Qobj) -> Qobj:
 
 
 def setup_operators(
-    system_params: Dict[str, Any]
+    system_params: Dict[str, Any],
 ) -> Tuple[Qobj, List[Qobj], Qobj, Qobj, Qobj, Qobj]:
     """
     Setup Hamiltonian and collapse operators for the system.
@@ -53,32 +53,45 @@ def setup_operators(
     sm_q2 = tensor(identity(2), sigmam(), identity(2))
     sm_tls = tensor(identity(2), identity(2), sigmam())
 
-    H_Q1 = 2 * np.pi * system_params["fq1"] / 2 * sz_q1
-    H_Q2 = 2 * np.pi * system_params["fq2"] / 2 * sz_q2
-    H_TLS = 2 * np.pi * system_params["fTLS"] / 2 * sz_tls
-    H_ZZ = 2 * np.pi * system_params["Jzz"] * sz_q1 * sz_q2
-    H_XX = 2 * np.pi * system_params["Jxx"] * sx_q1 * sx_q2
-    H_Q1_TLS = 2 * np.pi * system_params["JTLS"] * sz_q1 * sz_tls
+    H_Q1 = 2 * np.pi * system_params["f_q1"] / 2 * sz_q1
+    H_Q2 = 2 * np.pi * system_params["f_q2"] / 2 * sz_q2
+    H_TLS = 2 * np.pi * system_params["f_tls"] / 2 * sz_tls
 
-    # xtalk
-    H_xtalk_tls = 2 * np.pi * \
-        system_params["Jxttls"] * rwaCoupling(sm_q1, sm_tls)  # not used yet
-    H_xtalk_q1q2 = 2 * np.pi * \
-        system_params["Jxtqq"] * rwaCoupling(sm_q1, sm_q2)  # not used yet
+    H_ZZ = 2 * np.pi * system_params["J_zz"] * sz_q1 * sz_q2
+    H_Q1_TLS = 2 * np.pi * system_params["J_tls"] * sz_q1 * sz_tls
 
-    H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS + H_XX + H_xtalk_tls + H_xtalk_q1q2
+    H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS
 
-    c_ops = [
-        np.sqrt(system_params["relaxation"]["q1"]) * sm_q1,
-        np.sqrt((system_params["dephasing"]["q1"] -
-                system_params["relaxation"]["q1"]/2)/2) * sz_q1,
-        np.sqrt(system_params["relaxation"]["q2"]) * sm_q2,
-        np.sqrt((system_params["dephasing"]["q2"] -
-                system_params["relaxation"]["q2"]/2)/2) * sz_q2,
-        np.sqrt(system_params["relaxation"]["TLS"]) * sm_tls,
-        np.sqrt((system_params["dephasing"]["TLS"] -
-                system_params["relaxation"]["TLS"]/2)/2) * sz_tls,
-    ]
+    c_ops = []
+    ver1 = False
+    try:
+        ver1 = system_params["ver1"]
+    except KeyError:
+        ver1 = True
+
+    if ver1:
+        c_ops = [
+            np.sqrt(1/system_params["T1"]["q1"]) * sm_q1,
+            np.sqrt(1/system_params["T1"]["q2"]) * sm_q2,
+            np.sqrt(1/system_params["T1"]["tls"]) * sm_tls,
+            #
+            np.sqrt(((1/system_params["T2"]["q1"]) -
+                     (1/(2*system_params["T1"]["q1"]))) / 2) * sz_q1,
+            np.sqrt(((1/system_params["T2"]["q2"]) -
+                     (1/(2*system_params["T1"]["q2"]))) / 2) * sz_q2,
+            np.sqrt(((1/system_params["T2"]["tls"]) -
+                     (1/(2*system_params["T1"]["tls"]))) / 2) * sz_tls
+        ]
+    else:
+        c_ops = [
+            np.sqrt(1/system_params["T1"]["q1"]) * sm_q1,
+            np.sqrt(1/system_params["T1"]["q2"]) * sm_q2,
+            np.sqrt(1/system_params["T1"]["tls"]) * sm_tls,
+            #
+            np.sqrt(1/(2*system_params["T2"]["q1"])) * sz_q1,
+            np.sqrt(1/(2*system_params["T2"]["q2"])) * sz_q2,
+            np.sqrt(1/(2*system_params["T2"]["tls"])) * sz_tls
+        ]
 
     return H, c_ops, sz_q1, sz_q2, sx_q1, sx_q2
 
@@ -141,8 +154,8 @@ def plot_t1(
     ax.plot(tlist, exp_decay(tlist, *fit_par), 'r-',
             label=f'Fit: T1 = {fit_par[1]:.2f} μs')
     ax.set_title(
-        f'T1 - {label_Qbit} (JTLS = {system_params["JTLS"]}, \
-            Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
+        f'T1 - {label_Qbit} (J_tls = {system_params["J_tls"]}, \
+            J_zz = {system_params["J_zz"]})')
     ax.set_xlabel('Time (μs)')
     ax.set_ylabel('Population |1⟩')
     ax.legend()
@@ -232,8 +245,8 @@ def plot_t2(
                 label=f'Fit: T2 = {fit_par[1]:.2f} μs, f = {fit_par[2]}')
 
     ax.set_title(
-        f'T2 - {label_Qbit} (JTLS = {system_params["JTLS"]}, \
-            Jzz = {system_params["Jzz"]}, Jxx = {system_params["Jxx"]})')
+        f'T2 - {label_Qbit} (J_tls = {system_params["J_tls"]}, \
+            J_zz = {system_params["J_zz"]})')
     ax.set_xlabel('Time (μs)')
     ax.set_ylabel('Population |1⟩')
     ax.legend()
