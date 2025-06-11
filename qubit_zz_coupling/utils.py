@@ -81,7 +81,10 @@ def fq_shift(
         Frequency shift at time(s) t.
     """
     if jump:
-        noise = np.random.normal(loc=0, scale=noise_level, size=len(t))  # Samples of Gaussian noise
-        return f0 - ((1-noise) * v0 * np.sign(np.sin((2 * np.pi * t / T) + phi + .01)))
-    
+        # Samples of Gaussian noise
+        noise = np.random.normal(loc=0, scale=noise_level, size=len(t))
+
+        return f0 - ((1-noise) *
+                     v0 * np.sign(np.sin((2 * np.pi * t / T) + phi + .01)))
+
     return f0 - (v0 * np.sin((2 * np.pi * t / T) + phi))
