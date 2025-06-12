@@ -1,6 +1,7 @@
-from .utils import exp_decay, ramsey, make_population, fq_shift
+from .utils import exp_decay, ramsey, make_population, fq_shift, f2w
 
-from qutip import basis, tensor, sigmaz, sigmax, sigmam, mesolve, identity, Qobj
+from qutip import (basis, tensor, sigmaz, sigmax, sigmam, mesolve, identity,
+                   Qobj, expect)
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
@@ -252,3 +253,136 @@ def plot_t2(
     ax.legend()
     ax.grid(True)
     return ax
+
+
+# Ramsey expectation value for both qubits driven, TLS not driven
+def ramsey_expectation_drive_both(
+    tau: float,
+    w_d1: float,
+    w_d2: float,
+    t_pulse: float,
+    system_params: Dict[str, Any],
+    H0: Qobj,
+    c_ops: List[Qobj],
+    sz1: Qobj,
+    sz2: Qobj,
+    sz_tls: Qobj,
+    sx1: Qobj,
+    sx2: Qobj,
+    sm1: Qobj,
+    sm2: Qobj,
+    sm_tls: Qobj,
+    opts=None
+):
+    """
+    Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
+
+    Args:
+        tau: Free evolution time
+        w_d1: Drive frequency for Q1
+        w_d2: Drive frequency for Q2
+        t_pulse: Pulse duration
+        system_params: System parameters dictionary
+        sz1, sz2, sz_tls: Pauli-Z operators for Q1, Q2, TLS
+        sx1, sx2: Pauli-X operators for Q1, Q2
+        sm1, sm2, sm_tls: Lowering operators for Q1, Q2, TLS
+        opts: QuTiP solver options
+
+    Returns:
+        Tuple of expectation values (sz1, sz2, sz_tls)
+    """
+
+    psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+
+    # First π/2 pulse on both qubits (TLS not driven)
+    H1 = [
+        H0,
+        [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d1 * t)],
+        [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d2 * t)]
+    ]
+    res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, [], options=opts)
+    psi1 = res1.states[-1]
+
+    # Free evolution (no drive)
+    res2 = mesolve(H0, psi1, [0, tau], c_ops, [], options=opts)
+    psi2 = res2.states[-1]
+
+    # Second π/2 pulse on both qubits (TLS not driven)
+    H2 = [
+        H0,
+        [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d1 * t)],
+        [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d2 * t)]
+    ]
+    res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, [], options=opts)
+    psi_final = res3.states[-1]
+
+    # Measure ⟨sz1⟩, ⟨sz2⟩, ⟨sz_tls⟩
+    return expect(sz1, psi_final), expect(sz2, psi_final), \
+        expect(sz_tls, psi_final)
+
+
+# Ramsey expectation value for either qubit1 or qubit2 driven, TLS not driven
+def ramsey_expectation_drive_sep(
+    qubit: int,
+    tau: float,
+    w_d: float,
+    t_pulse: float,
+    system_params: Dict[str, Any],
+    H0: Qobj,
+    c_ops: List[Qobj],
+    sz1: Qobj,
+    sz2: Qobj,
+    sx1: Qobj,
+    sx2: Qobj,
+    opts=None
+):
+    """
+    Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
+
+    Args:
+        qubit: Qubit to drive (1 or 2)
+        tau: Free evolution time
+        w_d: Drive frequency for Q1
+        t_pulse: Pulse duration
+        system_params: System parameters dictionary
+        sz1, sz2, sz_tls: Pauli-Z operators for Q1, Q2, TLS
+        sx1, sx2: Pauli-X operators for Q1, Q2
+        sm1, sm2, sm_tls: Lowering operators for Q1, Q2, TLS
+        opts: QuTiP solver options
+
+    Returns:
+        Tuple of expectation values (sz1, sz2, sz_tls)
+    """
+
+    psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+
+    pulse = []
+    if qubit == 1:
+        pulse = \
+            [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d * t)]
+    else:
+        pulse = \
+            [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d * t)]
+
+    # First π/2 pulse on qubits
+    H1 = [
+        H0,
+        pulse
+    ]
+    res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, [], options=opts)
+    psi1 = res1.states[-1]
+
+    # Free evolution (no drive)
+    res2 = mesolve(H0, psi1, [0, tau], c_ops, [], options=opts)
+    psi2 = res2.states[-1]
+
+    # Second π/2 pulse on qubits
+    H2 = [
+        H0,
+        pulse
+    ]
+    res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, [], options=opts)
+    psi_final = res3.states[-1]
+
+    # Measure ⟨sz1⟩, ⟨sz2⟩, ⟨sz_tls⟩
+    return expect(sz1, psi_final), expect(sz2, psi_final)

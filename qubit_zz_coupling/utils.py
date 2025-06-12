@@ -1,13 +1,24 @@
 import numpy as np
 from typing import Union
 
+def f2w(f: float) -> float:
+    """
+    Convert frequency in GHz to angular frequency (rad/ns).
+
+    Args:
+        f: Frequency in GHz.
+
+    Returns:
+        Angular frequency in rad/ns.
+    """
+    return 2 * np.pi * f
 
 def make_population(
     expect: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     """
     Convert expectation value <σ> to |1⟩ population.
-    
+   
     Args:
         expect: Expectation value(s) of a Pauli operator.
     Returns:
@@ -20,7 +31,7 @@ def make_population(
 def exp_decay(t: np.ndarray, a: float, T1: float, c: float) -> np.ndarray:
     """
     Exponential decay function for T1 relaxation.
-    
+   
     Args:
         t: Time array.
         a: Amplitude.
@@ -42,7 +53,7 @@ def ramsey(
 ) -> np.ndarray:
     """
     Ramsey decay function.
-    
+   
     Args:
         t: Time array.
         A: Amplitude.
