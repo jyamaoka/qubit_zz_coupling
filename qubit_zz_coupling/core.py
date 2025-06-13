@@ -77,11 +77,11 @@ def setup_operators(
             np.sqrt(1/system_params["T1"]["tls"]) * sm_tls,
             #
             np.sqrt(((1/system_params["T2"]["q1"]) -
-                     (1/(2*system_params["T1"]["q1"]))) / 2) * sz_q1,
+                     (1/2/system_params["T1"]["q1"])) / 2) * sz_q1,
             np.sqrt(((1/system_params["T2"]["q2"]) -
-                     (1/(2*system_params["T1"]["q2"]))) / 2) * sz_q2,
+                     (1//2/system_params["T1"]["q2"])) / 2) * sz_q2,
             np.sqrt(((1/system_params["T2"]["tls"]) -
-                     (1/(2*system_params["T1"]["tls"]))) / 2) * sz_tls
+                     (1/2/system_params["T1"]["tls"])) / 2) * sz_tls
         ]
     else:
         c_ops = [
@@ -297,11 +297,11 @@ def ramsey_expectation_drive_both(
         [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d1 * t)],
         [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d2 * t)]
     ]
-    res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, [], options=opts)
+    res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi1 = res1.states[-1]
 
     # Free evolution (no drive)
-    res2 = mesolve(H0, psi1, [0, tau], c_ops, [], options=opts)
+    res2 = mesolve(H0, psi1, [0, tau], c_ops, e_ops=[], options=opts)
     psi2 = res2.states[-1]
 
     # Second π/2 pulse on both qubits (TLS not driven)
@@ -310,11 +310,51 @@ def ramsey_expectation_drive_both(
         [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d1 * t)],
         [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d2 * t)]
     ]
-    res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, [], options=opts)
+    res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi_final = res3.states[-1]
 
     # Measure ⟨sz1⟩, ⟨sz2⟩, ⟨sz_tls⟩
     return expect(sz1, psi_final), expect(sz2, psi_final)
+
+# Ramsey expectation value for both qubits driven, TLS not driven
+def ramsey_population_drive_both(
+    tau: float,
+    w_d1: float,
+    w_d2: float,
+    t_pulse: float,
+    system_params: Dict[str, Any],
+    H0: Qobj,
+    c_ops: List[Qobj],
+    sz1: Qobj,
+    sz2: Qobj,
+    sx1: Qobj,
+    sx2: Qobj,
+    opts: Dict[str, Any] = None,
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+):
+    """
+    Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
+
+    Args:
+        tau: Free evolution time
+        w_d1: Drive frequency for Q1
+        w_d2: Drive frequency for Q2
+        t_pulse: Pulse duration
+        system_params: System parameters dictionary
+        sz1, sz2: Pauli-Z operators for Q1, Q2
+        sx1, sx2: Pauli-X operators for Q1, Q2
+        opts: QuTiP solver options
+
+    Returns:
+        Tuple of populations (pop_q1, pop_q2)
+    """
+    sz1_exp, sz2_exp = ramsey_expectation_drive_both(
+        tau, w_d1, w_d2, t_pulse, system_params, H0, c_ops, sz1, sz2, sx1, sx2, opts, psi0
+    )
+    # Convert expectation values to populations in |1>
+    pop_q1 = (1 + sz1_exp) / 2
+    pop_q2 = (1 + sz2_exp) / 2
+    return pop_q1, pop_q2
 
 
 # Ramsey expectation value for either qubit1 or qubit2 driven, TLS not driven
@@ -368,11 +408,11 @@ def ramsey_expectation_drive_sep(
         H0,
         pulse
     ]
-    res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, [], options=opts)
+    res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi1 = res1.states[-1]
 
     # Free evolution (no drive w/ c_ops)
-    res2 = mesolve(H0, psi1, [0, tau], c_ops, [], options=opts)
+    res2 = mesolve(H0, psi1, [0, tau], c_ops, e_ops=[], options=opts)
     psi2 = res2.states[-1]
 
     # Second π/2 pulse on qubits
@@ -380,8 +420,49 @@ def ramsey_expectation_drive_sep(
         H0,
         pulse
     ]
-    res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, [], options=opts)
+    res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi_final = res3.states[-1]
 
     # Measure ⟨sz1⟩, ⟨sz2⟩, ⟨sz_tls⟩
     return expect(sz1, psi_final), expect(sz2, psi_final)
+
+# Ramsey expectation value for either qubit1 or qubit2 driven, TLS not driven
+def ramsey_population_drive_sep(
+    qubit: int,
+    tau: float,
+    w_d: float,
+    t_pulse: float,
+    system_params: Dict[str, Any],
+    H0: Qobj,
+    c_ops: List[Qobj],
+    sz1: Qobj,
+    sz2: Qobj,
+    sx1: Qobj,
+    sx2: Qobj,
+    opts: Dict[str, Any]=None,
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+):
+    """
+    Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
+
+    Args:
+        qubit: Qubit to drive (1 or 2)
+        tau: Free evolution time
+        w_d: Drive frequency for Q1
+        t_pulse: Pulse duration
+        system_params: System parameters dictionary
+        sz1, sz2: Pauli-Z operators for Q1, Q2, TLS
+        sx1, sx2: Pauli-X operators for Q1, Q2
+        sm1, sm2, sm_tls: Lowering operators for Q1, Q2, TLS
+        opts: QuTiP solver options
+
+    Returns:
+        Tuple of populations (pop_q1, pop_q2)
+    """
+    sz1_exp, sz2_exp = ramsey_expectation_drive_sep(
+        qubit, tau, w_d, t_pulse, system_params, H0, c_ops, sz1, sz2, sx1, sx2, opts, psi0
+    )
+    # Convert expectation values to populations in |1>
+    pop_q1 = (1 + sz1_exp) / 2
+    pop_q2 = (1 + sz2_exp) / 2
+    return pop_q1, pop_q2
