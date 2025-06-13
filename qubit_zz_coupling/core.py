@@ -266,13 +266,10 @@ def ramsey_expectation_drive_both(
     c_ops: List[Qobj],
     sz1: Qobj,
     sz2: Qobj,
-    sz_tls: Qobj,
     sx1: Qobj,
     sx2: Qobj,
-    sm1: Qobj,
-    sm2: Qobj,
-    sm_tls: Qobj,
-    opts=None
+    opts: Dict[str, Any] = None,
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
 ):
     """
     Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
@@ -292,7 +289,7 @@ def ramsey_expectation_drive_both(
         Tuple of expectation values (sz1, sz2, sz_tls)
     """
 
-    psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+    #psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
 
     # First π/2 pulse on both qubits (TLS not driven)
     H1 = [
@@ -317,8 +314,7 @@ def ramsey_expectation_drive_both(
     psi_final = res3.states[-1]
 
     # Measure ⟨sz1⟩, ⟨sz2⟩, ⟨sz_tls⟩
-    return expect(sz1, psi_final), expect(sz2, psi_final), \
-        expect(sz_tls, psi_final)
+    return expect(sz1, psi_final), expect(sz2, psi_final)
 
 
 # Ramsey expectation value for either qubit1 or qubit2 driven, TLS not driven
@@ -334,7 +330,8 @@ def ramsey_expectation_drive_sep(
     sz2: Qobj,
     sx1: Qobj,
     sx2: Qobj,
-    opts=None
+    opts: Dict[str, Any]=None,
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
 ):
     """
     Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
@@ -354,15 +351,17 @@ def ramsey_expectation_drive_sep(
         Tuple of expectation values (sz1, sz2, sz_tls)
     """
 
-    psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+    #psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
 
     pulse = []
     if qubit == 1:
         pulse = \
-            [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d * t)]
+            [sx1,
+             lambda t, args: 2 * system_params["omega1"] * np.cos(w_d * t)]
     else:
         pulse = \
-            [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d * t)]
+            [sx2,
+             lambda t, args: 2 * system_params["omega2"] * np.cos(w_d * t)]
 
     # First π/2 pulse on qubits
     H1 = [
@@ -372,7 +371,7 @@ def ramsey_expectation_drive_sep(
     res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, [], options=opts)
     psi1 = res1.states[-1]
 
-    # Free evolution (no drive)
+    # Free evolution (no drive w/ c_ops)
     res2 = mesolve(H0, psi1, [0, tau], c_ops, [], options=opts)
     psi2 = res2.states[-1]
 
