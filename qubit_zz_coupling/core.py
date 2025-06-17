@@ -61,7 +61,7 @@ def setup_operators(
     H_ZZ = 2 * np.pi * system_params["J_zz"] * sz_q1 * sz_q2
     H_Q1_TLS = 2 * np.pi * system_params["J_tls"] * sz_q1 * sz_tls
 
-    H = H_Q1 + H_Q2 - H_ZZ + H_TLS + H_Q1_TLS
+    H = H_Q1 + H_Q2 + H_TLS - H_ZZ - H_Q1_TLS
 
     c_ops = []
     ver1 = False
