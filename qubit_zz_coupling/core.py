@@ -1,4 +1,4 @@
-from .utils import exp_decay, ramsey, make_population, fq_shift, f2w
+from .utils import exp_decay, ramsey, make_population, fq_shift, f2w, parse_drive
 
 from qutip import (basis, tensor, sigmaz, sigmax, sigmam, mesolve, identity,
                    Qobj, expect)
@@ -8,6 +8,32 @@ from scipy.optimize import curve_fit
 from qtt.algorithms.functions import fit_gauss_ramsey
 
 from typing import Dict, Tuple, List, Any, Union
+
+def make_3tensor(s1: int, s2: int, s3: int) -> Qobj:
+    """
+    Make 3 Tensor
+    Args:
+        s1 (int): state q1
+        s2 (int): state q2
+        s3 (int): state tls
+
+    Return:
+        Qobj: tensor state
+    """
+    return tensor(basis(2,s1), basis(2,s2), basis(2,s3))
+
+
+def make_n(operator: Qobj) -> Qobj:
+    """
+    Make n operator
+
+    Args:
+        operator (Qobj): Operator
+
+    Returns:
+        Qobj: n expectation 
+    """
+    return operator.dag() * operator
 
 
 def rwaCoupling(operator0: Qobj, operator1: Qobj) -> Qobj:
@@ -94,7 +120,7 @@ def setup_operators(
             np.sqrt(1/(2*system_params["T2"]["tls"])) * sz_tls
         ]
 
-    return H, c_ops, sz_q1, sz_q2, sx_q1, sx_q2
+    return H, c_ops, sz_q1, sz_q2, sx_q1, sx_q2, sm_q1, sm_q2
 
 
 def solve_t1(
@@ -294,8 +320,8 @@ def ramsey_expectation_drive_both(
     # First π/2 pulse on both qubits (TLS not driven)
     H1 = [
         H0,
-        [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d1 * t)],
-        [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d2 * t)]
+        [sx1, lambda t_, args: 2 * system_params["omega1"] * np.cos(w_d1 * t_)],
+        [sx2, lambda t_, args: 2 * system_params["omega2"] * np.cos(w_d2 * t_)]
     ]
     res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi1 = res1.states[-1]
@@ -361,7 +387,7 @@ def ramsey_population_drive_both(
 def ramsey_expectation_drive_sep(
     qubit: int,
     tau: float,
-    w_d: float,
+    w_d: Union[float, tuple[float,float]],
     t_pulse: float,
     system_params: Dict[str, Any],
     H0: Qobj,
@@ -391,22 +417,19 @@ def ramsey_expectation_drive_sep(
         Tuple of expectation values (sz1, sz2, sz_tls)
     """
 
-    #psi0 = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+    sx = sx1
+    omega = system_params["omega1"]
 
-    pulse = []
-    if qubit == 1:
-        pulse = \
-            [sx1,
-             lambda t, args: 2 * system_params["omega1"] * np.cos(w_d * t)]
-    else:
-        pulse = \
-            [sx2,
-             lambda t, args: 2 * system_params["omega2"] * np.cos(w_d * t)]
+    if qubit == 2:
+        sx = sx2
+        omega = system_params["omega2"]  
+
+    w_d1, w_d2 = parse_drive(w_d)
 
     # First π/2 pulse on qubits
     H1 = [
         H0,
-        pulse
+        [sx, lambda t, args: 2 * omega * np.cos(w_d1 * t)]
     ]
     res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi1 = res1.states[-1]
@@ -418,7 +441,7 @@ def ramsey_expectation_drive_sep(
     # Second π/2 pulse on qubits
     H2 = [
         H0,
-        pulse
+        [sx, lambda t_, args: 2 * omega * np.cos(w_d2 * t_)]
     ]
     res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi_final = res3.states[-1]
@@ -430,7 +453,7 @@ def ramsey_expectation_drive_sep(
 def ramsey_population_drive_sep(
     qubit: int,
     tau: float,
-    w_d: float,
+    w_d: Union[float, tuple[float,float]],
     t_pulse: float,
     system_params: Dict[str, Any],
     H0: Qobj,
@@ -466,3 +489,70 @@ def ramsey_population_drive_sep(
     pop_q1 = (1 + sz1_exp) / 2
     pop_q2 = (1 + sz2_exp) / 2
     return pop_q1, pop_q2
+
+
+def rabi_results(tau, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
+    """
+    Simulate a Rabi oscillation experiment.
+
+    Args:
+        t (float): Pulse duration.
+        w_d (float): Drive frequency.
+        omega (float): Drive amplitude.
+        H0 (Qobj): Bare Hamiltonian.
+        sx (Qobj): Pauli-X operator for the driven qubit.
+        sz (Qobj): Pauli-Z operator for the driven qubit.
+        c_ops (list): List of collapse operators (optional).
+        opts (Options): QuTiP solver options (optional).
+        psi0 (Qobj): Initial state (optional, default |0>).
+
+    Returns:
+        float: Expectation value of sz after the pulse.
+    """
+    
+    # Drive Hamiltonian
+    H = [
+        H0,
+        [sx, lambda t, args: 2 * omega * np.cos(w_d * t)]
+    ]
+
+    # Evolve under the drive
+    result = mesolve(H, psi0, [0, tau], c_ops, e_ops=[], options=opts)
+    #psi_final = result.states[-1]
+
+    # Return expectation value of sz
+    #return expect(sz, psi_final)
+    return result
+
+def rabi_expectation(tau, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
+    """
+    Simulate a Rabi oscillation experiment.
+
+    Args:
+        t (float): Pulse duration.
+        w_d (float): Drive frequency.
+        omega (float): Drive amplitude.
+        H0 (Qobj): Bare Hamiltonian.
+        sx (Qobj): Pauli-X operator for the driven qubit.
+        sz (Qobj): Pauli-Z operator for the driven qubit.
+        c_ops (list): List of collapse operators (optional).
+        opts (Options): QuTiP solver options (optional).
+        psi0 (Qobj): Initial state (optional, default |0>).
+
+    Returns:
+        float: Expectation value of sz after the pulse.
+    """
+    
+    # Drive Hamiltonian
+    H = [
+        H0,
+        [sx, lambda t, args: 2 * omega * np.cos(w_d * t)]
+    ]
+
+    # Evolve under the drive
+    result = mesolve(H, psi0, [0, tau], c_ops, e_ops=[], options=opts)
+    #psi_final = result.states[-1]
+
+    # Return expectation value of sz
+    #return expect(sz, psi_final)
+    return result

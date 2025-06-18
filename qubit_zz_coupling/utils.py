@@ -99,3 +99,13 @@ def fq_shift(
                      v0 * np.sign(np.sin((2 * np.pi * t / T) + phi + .01)))
 
     return f0 - (v0 * np.sin((2 * np.pi * t / T) + phi))
+
+def parse_drive(w_d):
+    """
+    If w_d is a tuple (or list) of length 2, return its two elements.
+    If w_d is a float (or int), return two copies of the float.
+    """
+    if isinstance(w_d, (tuple, list)) and len(w_d) == 2:
+        return w_d[0], w_d[1]
+    else:
+        return w_d, w_d    
