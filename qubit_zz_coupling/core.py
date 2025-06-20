@@ -87,7 +87,10 @@ def setup_operators(
     H_ZZ = 2 * np.pi * system_params["J_zz"] * sz_q1 * sz_q2
     H_Q1_TLS = 2 * np.pi * system_params["J_tls"] * sz_q1 * sz_tls
 
-    H = H_Q1 + H_Q2 + H_TLS - H_ZZ - H_Q1_TLS
+    if system_params["single"] :
+        H = H_Q1
+    else:
+        H = H_Q1 + H_Q2 + H_TLS - H_ZZ - H_Q1_TLS
 
     c_ops = []
     ver1 = False
@@ -491,7 +494,7 @@ def ramsey_population_drive_sep(
     return pop_q1, pop_q2
 
 
-def rabi_results(tau, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
+def rabi_results(taus, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
     """
     Simulate a Rabi oscillation experiment.
 
@@ -513,11 +516,11 @@ def rabi_results(tau, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
     # Drive Hamiltonian
     H = [
         H0,
-        [sx, lambda t, args: 2 * omega * np.cos(w_d * t)]
+        [sx, lambda t, args: 2 * omega * np.sin(w_d * t)]
     ]
 
     # Evolve under the drive
-    result = mesolve(H, psi0, [0, tau], c_ops, e_ops=[], options=opts)
+    result = mesolve(H, psi0, taus, c_ops, e_ops=[], options=opts)
     #psi_final = result.states[-1]
 
     # Return expectation value of sz
