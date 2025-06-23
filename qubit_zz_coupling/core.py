@@ -80,7 +80,7 @@ def setup_operators(
     sm_q2 = tensor(identity(2), sigmam(), identity(2))
     sm_tls = tensor(identity(2), identity(2), sigmam())
 
-    H_Q1 = 2 * np.pi * system_params["f_q1"] / 2 * sz_q1
+    H_Q1 = 2 * np.pi * system_params["f_q1"] * 0.5 * sz_q1
     H_Q2 = 2 * np.pi * system_params["f_q2"] / 2 * sz_q2
     H_TLS = 2 * np.pi * system_params["f_tls"] / 2 * sz_tls
 
@@ -323,8 +323,8 @@ def ramsey_expectation_drive_both(
     # First π/2 pulse on both qubits (TLS not driven)
     H1 = [
         H0,
-        [sx1, lambda t_, args: 2 * system_params["omega1"] * np.cos(w_d1 * t_)],
-        [sx2, lambda t_, args: 2 * system_params["omega2"] * np.cos(w_d2 * t_)]
+        [sx1, lambda t_, args: system_params["omega1"] * np.cos(w_d1 * t_)],
+        [sx2, lambda t_, args: system_params["omega2"] * np.cos(w_d2 * t_)]
     ]
     res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi1 = res1.states[-1]
@@ -336,8 +336,8 @@ def ramsey_expectation_drive_both(
     # Second π/2 pulse on both qubits (TLS not driven)
     H2 = [
         H0,
-        [sx1, lambda t, args: 2 * system_params["omega1"] * np.cos(w_d1 * t)],
-        [sx2, lambda t, args: 2 * system_params["omega2"] * np.cos(w_d2 * t)]
+        [sx1, lambda t, args: system_params["omega1"] * np.cos(w_d1 * t)],
+        [sx2, lambda t, args: system_params["omega2"] * np.cos(w_d2 * t)]
     ]
     res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi_final = res3.states[-1]
@@ -432,7 +432,7 @@ def ramsey_expectation_drive_sep(
     # First π/2 pulse on qubits
     H1 = [
         H0,
-        [sx, lambda t, args: 2 * omega * np.cos(w_d1 * t)]
+        [sx, lambda t, args: omega * np.cos(w_d1 * t)]
     ]
     res1 = mesolve(H1, psi0, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi1 = res1.states[-1]
@@ -444,7 +444,7 @@ def ramsey_expectation_drive_sep(
     # Second π/2 pulse on qubits
     H2 = [
         H0,
-        [sx, lambda t_, args: 2 * omega * np.cos(w_d2 * t_)]
+        [sx, lambda t_, args: omega * np.cos(w_d2 * t_)]
     ]
     res3 = mesolve(H2, psi2, [0, t_pulse], c_ops, e_ops=[], options=opts)
     psi_final = res3.states[-1]
@@ -494,7 +494,7 @@ def ramsey_population_drive_sep(
     return pop_q1, pop_q2
 
 
-def rabi_results(taus, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
+def rabi_results(taus, w_d, omega, H0, sx, sz, n, c_ops=None, opts=None, psi0=None):
     """
     Simulate a Rabi oscillation experiment.
 
@@ -516,18 +516,17 @@ def rabi_results(taus, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None)
     # Drive Hamiltonian
     H = [
         H0,
-        [sx, lambda t, args: 2 * omega * np.sin(w_d * t)]
+        [sx, lambda t, args: omega * np.sin(w_d * t)]
     ]
 
     # Evolve under the drive
-    result = mesolve(H, psi0, taus, c_ops, e_ops=[], options=opts)
-    #psi_final = result.states[-1]
+    result = mesolve(H, psi0, taus, c_ops, e_ops=[n], options=opts)
 
-    # Return expectation value of sz
-    #return expect(sz, psi_final)
-    return result
+    # Return results
+    return result.expect[0]
 
-def rabi_expectation(tau, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=None):
+
+def rabi_results_multiplex(taus, w_d1, w_d2, omega, H0, sx1, sx2, sz1, sz2, n, c_ops=None, opts=None, psi0=None):
     """
     Simulate a Rabi oscillation experiment.
 
@@ -549,13 +548,12 @@ def rabi_expectation(tau, w_d, omega, H0, sx, sz, c_ops=None, opts=None, psi0=No
     # Drive Hamiltonian
     H = [
         H0,
-        [sx, lambda t, args: 2 * omega * np.cos(w_d * t)]
+        [sx1, lambda t, args: omega * np.sin(w_d1 * t)]
+        #[sx2, lambda t, args: omega * np.sin(w_d2 * t)]
     ]
 
     # Evolve under the drive
-    result = mesolve(H, psi0, [0, tau], c_ops, e_ops=[], options=opts)
-    #psi_final = result.states[-1]
+    result = mesolve(H, psi0, taus, c_ops, e_ops=[n], options=opts)
 
-    # Return expectation value of sz
-    #return expect(sz, psi_final)
-    return result
+    # Return results
+    return result.expect[0]
