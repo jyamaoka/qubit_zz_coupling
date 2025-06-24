@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 
 def f2w(f: float) -> float:
     """
@@ -100,10 +100,18 @@ def fq_shift(
 
     return f0 - (v0 * np.sin((2 * np.pi * t / T) + phi))
 
-def parse_drive(w_d):
+def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
     """
-    If w_d is a tuple (or list) of length 2, return its two elements.
-    If w_d is a float (or int), return two copies of the float.
+    Parse a drive frequency input and return a tuple of two floats.
+
+    If w_d is a tuple or list of length 2, return its two elements.
+    If w_d is a float or int, return two copies of the value.
+
+    Args:
+        w_d: Drive frequency as a float, int, or a tuple/list of two floats.
+
+    Returns:
+        Tuple[float, float]: Two drive frequencies.
     """
     if isinstance(w_d, (tuple, list)) and len(w_d) == 2:
         return w_d[0], w_d[1]

@@ -494,7 +494,7 @@ def ramsey_population_drive_sep(
     return pop_q1, pop_q2
 
 
-def rabi_results(taus, w_d, omega, H0, sx, sz, n, c_ops=None, opts=None, psi0=None):
+def rabi_results(taus, w_d, omega, H0, sx, c_ops=None, opts=None, psi0=None):
     """
     Simulate a Rabi oscillation experiment.
 
@@ -520,13 +520,13 @@ def rabi_results(taus, w_d, omega, H0, sx, sz, n, c_ops=None, opts=None, psi0=No
     ]
 
     # Evolve under the drive
-    result = mesolve(H, psi0, taus, c_ops, e_ops=[n], options=opts)
+    result = mesolve(H, psi0, taus, c_ops, e_ops=[], options=opts)
 
     # Return results
-    return result.expect[0]
+    return result
 
 
-def rabi_results_multiplex(taus, w_d1, w_d2, omega, H0, sx1, sx2, sz1, sz2, n, c_ops=None, opts=None, psi0=None):
+def rabi_results_multiplex(taus, w_d1, w_d2, omega, H0, sx1, sx2, c_ops=None, opts=None, psi0=None):
     """
     Simulate a Rabi oscillation experiment.
 
@@ -548,12 +548,89 @@ def rabi_results_multiplex(taus, w_d1, w_d2, omega, H0, sx1, sx2, sz1, sz2, n, c
     # Drive Hamiltonian
     H = [
         H0,
-        [sx1, lambda t, args: omega * np.sin(w_d1 * t)]
-        #[sx2, lambda t, args: omega * np.sin(w_d2 * t)]
+        [sx1, lambda t, args: omega * np.sin(w_d1 * t)],
+        [sx2, lambda t, args: omega * np.sin(w_d2 * t)]
     ]
 
     # Evolve under the drive
-    result = mesolve(H, psi0, taus, c_ops, e_ops=[n], options=opts)
+    result = mesolve(H, psi0, taus, c_ops, e_ops=[], options=opts)
 
     # Return results
-    return result.expect[0]
+    return result
+
+# Ramsey expectation value for either qubit1 or qubit2 driven, TLS not driven
+def ramsey_result(
+    tau: float,
+    w_d: Union[float, tuple[float,float]],
+    t_pulse: float,
+    omega: float,
+    H0: Qobj,
+    sx: Qobj,
+    c_ops: List[Qobj],
+    opts: Dict[str, Any]=None,
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+)-> Qobj:
+    """
+    Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
+
+    Args:
+        qubit: Qubit to drive (1 or 2)
+        tau: Free evolution time
+        w_d: Drive frequency for Q1
+        t_pulse: Pulse duration
+        system_params: System parameters dictionary
+        sz1, sz2, sz_tls: Pauli-Z operators for Q1, Q2, TLS
+        sx1, sx2: Pauli-X operators for Q1, Q2
+        sm1, sm2, sm_tls: Lowering operators for Q1, Q2, TLS
+        opts: QuTiP solver options
+
+    Returns:
+        Qobj of states
+    """
+    w_d1, w_d2 = parse_drive(w_d)
+    
+    # First π/2 pulse on qubits
+    #step = 0.5
+    #pi_vec=np.arange(0,t_pulse/2+step,step) # ns
+    pi_vec = t_pulse
+
+    H1 = [
+        H0,
+        [sx, lambda t, args: omega * np.sin(w_d1 * t)]
+    ]
+
+    res1 = mesolve(H1, psi0, [0,pi_vec], c_ops, e_ops=[], options=opts)
+    #psi1 = res1.states[-1]
+    psi = res1.final_state
+
+    # Free evolution (no drive w/ c_ops)
+     # Times for the free oscillation time independant simulation
+    step=0.5 # ns
+    t=np.arange(0,tau+step,step) # ns 
+  
+    # shift to keep the phase consistent
+    #shift=pi_vec[-1]
+
+    #res2 = mesolve(H0, psi, (t+shift), c_ops, e_ops=[], options=opts)
+    #psi = res2.final_state
+    # for T=0 or smaller than step not to throw an error
+    #if tau>=step:
+        #Ramsey free evolution simulation
+    res2 = mesolve(H0, psi, [pi_vec,tau+pi_vec], c_ops, e_ops=[], options=opts)
+    psi = res2.final_state
+    #shift+=t[-1]
+    
+    #res2 = mesolve(H0, psi1, [0, tau], c_ops, e_ops=[], options=opts)
+    #psi2 = res2.states[-1]
+
+    # Second π/2 pulse on qubits
+    H2 = [
+        H0,
+        [sx, lambda t, args: omega * np.sin(w_d2 * t)]
+    ]
+    res3 = mesolve(H2, psi, [tau+pi_vec,tau+pi_vec+pi_vec], c_ops, e_ops=[], options=opts)
+    #psi_final = res3.states[-1]
+    psi_final = res3.final_state
+
+    # Retrun final state
+    return psi_final
