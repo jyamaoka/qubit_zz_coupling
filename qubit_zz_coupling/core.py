@@ -80,9 +80,9 @@ def setup_operators(
     sm_q2 = tensor(identity(2), sigmam(), identity(2))
     sm_tls = tensor(identity(2), identity(2), sigmam())
 
-    H_Q1 = 2 * np.pi * system_params["f_q1"] * 0.5 * sz_q1
-    H_Q2 = 2 * np.pi * system_params["f_q2"] / 2 * sz_q2
-    H_TLS = 2 * np.pi * system_params["f_tls"] / 2 * sz_tls
+    H_Q1 = -2 * np.pi * system_params["f_q1"] / 2 * sz_q1
+    H_Q2 = -2 * np.pi * system_params["f_q2"] / 2 * sz_q2
+    H_TLS = -2 * np.pi * system_params["f_tls"] / 2 * sz_tls
 
     H_ZZ = 2 * np.pi * system_params["J_zz"] * sz_q1 * sz_q2
     H_Q1_TLS = 2 * np.pi * system_params["J_tls"] * sz_q1 * sz_tls
@@ -516,7 +516,7 @@ def rabi_results(taus, w_d, omega, H0, sx, c_ops=None, opts=None, psi0=None):
     # Drive Hamiltonian
     H = [
         H0,
-        [sx, lambda t, args: omega * np.sin(w_d * t)]
+        [sx, lambda t, args: omega * np.cos(w_d * t)]
     ]
 
     # Evolve under the drive
@@ -548,8 +548,8 @@ def rabi_results_multiplex(taus, w_d1, w_d2, omega, H0, sx1, sx2, c_ops=None, op
     # Drive Hamiltonian
     H = [
         H0,
-        [sx1, lambda t, args: omega * np.sin(w_d1 * t)],
-        [sx2, lambda t, args: omega * np.sin(w_d2 * t)]
+        [sx1, lambda t, args: omega * np.cos(w_d1 * t)],
+        [sx2, lambda t, args: omega * np.cos(w_d2 * t)]
     ]
 
     # Evolve under the drive
@@ -568,7 +568,8 @@ def ramsey_result(
     sx: Qobj,
     c_ops: List[Qobj],
     opts: Dict[str, Any]=None,
-    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0))
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0)),
+    step: float=1.0
 )-> Qobj:
     """
     Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
@@ -588,48 +589,122 @@ def ramsey_result(
         Qobj of states
     """
     w_d1, w_d2 = parse_drive(w_d)
-    
+
     # First π/2 pulse on qubits
-    #step = 0.5
-    #pi_vec=np.arange(0,t_pulse/2+step,step) # ns
-    pi_vec = t_pulse
+    step = 2
+    pi_vec=np.arange(0,t_pulse+step,step) # ns
+    #print(pi_vec)
+    #pi_vec = t_pulse
 
     H1 = [
         H0,
-        [sx, lambda t, args: omega * np.sin(w_d1 * t)]
+        [sx, lambda t, args: omega * np.cos(w_d1 * t)]
     ]
 
-    res1 = mesolve(H1, psi0, [0,pi_vec], c_ops, e_ops=[], options=opts)
-    #psi1 = res1.states[-1]
+    res1 = mesolve(H1, psi0, pi_vec, c_ops, e_ops=[], options=opts)
     psi = res1.final_state
 
     # Free evolution (no drive w/ c_ops)
      # Times for the free oscillation time independant simulation
-    step=0.5 # ns
+    step=1 # ns
     t=np.arange(0,tau+step,step) # ns 
   
     # shift to keep the phase consistent
-    #shift=pi_vec[-1]
+    shift=pi_vec[-1]
 
-    #res2 = mesolve(H0, psi, (t+shift), c_ops, e_ops=[], options=opts)
-    #psi = res2.final_state
     # for T=0 or smaller than step not to throw an error
-    #if tau>=step:
+    if tau>=step:
         #Ramsey free evolution simulation
-    res2 = mesolve(H0, psi, [pi_vec,tau+pi_vec], c_ops, e_ops=[], options=opts)
-    psi = res2.final_state
-    #shift+=t[-1]
+        res2 = mesolve(H0, psi, (t+shift), c_ops, e_ops=[], options=opts)
+        psi = res2.final_state
+    shift+=t[-1]
     
-    #res2 = mesolve(H0, psi1, [0, tau], c_ops, e_ops=[], options=opts)
-    #psi2 = res2.states[-1]
 
     # Second π/2 pulse on qubits
     H2 = [
         H0,
-        [sx, lambda t, args: omega * np.sin(w_d2 * t)]
+        [sx, lambda t, args: omega * np.cos(w_d2 * t)]
     ]
-    res3 = mesolve(H2, psi, [tau+pi_vec,tau+pi_vec+pi_vec], c_ops, e_ops=[], options=opts)
-    #psi_final = res3.states[-1]
+    res3 = mesolve(H2, psi, (pi_vec+shift), c_ops, e_ops=[], options=opts)
+    psi_final = res3.final_state
+
+    # Retrun final state
+    return psi_final
+
+# Ramsey expectation value for either qubit1 or qubit2 driven, TLS not driven
+def ramsey_result_multiplex(
+    tau: float,
+    w_d1: Union[float, tuple[float,float]],
+    w_d2: Union[float, tuple[float,float]],
+    t_pulse: float,
+    omega: float,
+    H0: Qobj,
+    sx_q1: Qobj,
+    sx_q2: Qobj,
+    c_ops: List[Qobj],
+    opts: Dict[str, Any]=None,
+    psi0: Qobj = tensor(basis(2, 0), basis(2, 0), basis(2, 0)),
+    step: float=1.0
+)-> Qobj:
+    """
+    Ramsey experiment for three qubits (Q1, Q2 driven, TLS not driven).
+
+    Args:
+        qubit: Qubit to drive (1 or 2)
+        tau: Free evolution time
+        w_d: Drive frequency for Q1
+        t_pulse: Pulse duration
+        system_params: System parameters dictionary
+        sz1, sz2, sz_tls: Pauli-Z operators for Q1, Q2, TLS
+        sx1, sx2: Pauli-X operators for Q1, Q2
+        sm1, sm2, sm_tls: Lowering operators for Q1, Q2, TLS
+        opts: QuTiP solver options
+
+    Returns:
+        Qobj of states
+    """
+    w_d11, w_d12 = parse_drive(w_d1)
+    w_d21, w_d22 = parse_drive(w_d2)
+
+    # First π/2 pulse on qubits
+    step = 2
+    pi_vec=np.arange(0,t_pulse+step,step) # ns
+    #print(pi_vec)
+    #pi_vec = t_pulse
+
+    H1 = [
+        H0,
+        [sx_q1, lambda t, args: omega * np.cos(w_d11 * t)],
+        [sx_q2, lambda t, args: omega * np.cos(w_d21 * t)]
+
+    ]
+
+    res1 = mesolve(H1, psi0, pi_vec, c_ops, e_ops=[], options=opts)
+    psi = res1.final_state
+
+    # Free evolution (no drive w/ c_ops)
+     # Times for the free oscillation time independant simulation
+    step=1 # ns
+    t=np.arange(0,tau+step,step) # ns 
+  
+    # shift to keep the phase consistent
+    shift=pi_vec[-1]
+
+    # for T=0 or smaller than step not to throw an error
+    if tau>=step:
+        #Ramsey free evolution simulation
+        res2 = mesolve(H0, psi, (t+shift), c_ops, e_ops=[], options=opts)
+        psi = res2.final_state
+    shift+=t[-1]
+    
+
+    # Second π/2 pulse on qubits
+    H2 = [
+        H0,
+       [sx_q1, lambda t, args: omega * np.cos(w_d11 * t)],
+       [sx_q2, lambda t, args: omega * np.cos(w_d21 * t)]
+    ]
+    res3 = mesolve(H2, psi, (pi_vec+shift), c_ops, e_ops=[], options=opts)
     psi_final = res3.final_state
 
     # Retrun final state
