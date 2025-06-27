@@ -1,13 +1,24 @@
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 
+def f2w(f: float) -> float:
+    """
+    Convert frequency in GHz to angular frequency (rad/ns).
+
+    Args:
+        f: Frequency in GHz.
+
+    Returns:
+        Angular frequency in rad/ns.
+    """
+    return 2 * np.pi * f
 
 def make_population(
     expect: Union[float, np.ndarray]
 ) -> Union[float, np.ndarray]:
     """
     Convert expectation value <σ> to |1⟩ population.
-    
+   
     Args:
         expect: Expectation value(s) of a Pauli operator.
     Returns:
@@ -20,7 +31,7 @@ def make_population(
 def exp_decay(t: np.ndarray, a: float, T1: float, c: float) -> np.ndarray:
     """
     Exponential decay function for T1 relaxation.
-    
+   
     Args:
         t: Time array.
         a: Amplitude.
@@ -42,7 +53,7 @@ def ramsey(
 ) -> np.ndarray:
     """
     Ramsey decay function.
-    
+   
     Args:
         t: Time array.
         A: Amplitude.
@@ -88,3 +99,21 @@ def fq_shift(
                      v0 * np.sign(np.sin((2 * np.pi * t / T) + phi + .01)))
 
     return f0 - (v0 * np.sin((2 * np.pi * t / T) + phi))
+
+def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
+    """
+    Parse a drive frequency input and return a tuple of two floats.
+
+    If w_d is a tuple or list of length 2, return its two elements.
+    If w_d is a float or int, return two copies of the value.
+
+    Args:
+        w_d: Drive frequency as a float, int, or a tuple/list of two floats.
+
+    Returns:
+        Tuple[float, float]: Two drive frequencies.
+    """
+    if isinstance(w_d, (tuple, list)) and len(w_d) == 2:
+        return w_d[0], w_d[1]
+    else:
+        return w_d, w_d    
