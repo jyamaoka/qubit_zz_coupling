@@ -116,4 +116,7 @@ def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, floa
     if isinstance(w_d, (tuple, list)) and len(w_d) == 2:
         return w_d[0], w_d[1]
     else:
-        return w_d, w_d    
+        return w_d, w_d 
+
+def parse_omega(omega: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
+    return parse_drive(omega)
