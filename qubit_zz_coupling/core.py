@@ -108,7 +108,7 @@ def setup_operators(
             np.sqrt(((1/system_params["T2"]["q1"]) -
                      (1/2/system_params["T1"]["q1"])) / 2) * sz_q1,
             np.sqrt(((1/system_params["T2"]["q2"]) -
-                     (1//2/system_params["T1"]["q2"])) / 2) * sz_q2,
+                     (1/2/system_params["T1"]["q2"])) / 2) * sz_q2,
             np.sqrt(((1/system_params["T2"]["tls"]) -
                      (1/2/system_params["T1"]["tls"])) / 2) * sz_tls
         ]
