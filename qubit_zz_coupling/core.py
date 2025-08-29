@@ -88,7 +88,7 @@ def setup_operators(
     H_Q1_TLS = 2 * np.pi * system_params["J_tls"] * sz_q1 * sz_tls
 
     if system_params["single"] :
-        H = H_Q1
+        H = H_Q1 + H_Q2 - H_ZZ
     else:
         H = H_Q1 + H_Q2 + H_TLS - H_ZZ - H_Q1_TLS
 
