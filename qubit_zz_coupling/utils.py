@@ -116,4 +116,33 @@ def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, floa
     if isinstance(w_d, (tuple, list)) and len(w_d) == 2:
         return w_d[0], w_d[1]
     else:
-        return w_d, w_d    
+        return w_d, w_d 
+
+def parse_omega(omega: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
+    return parse_drive(omega)
+
+def sample_bimodal_gaussian(
+    mu1: float, sigma1: float,
+    mu2: float, sigma2: float,
+    size: int = 1,
+    weight: float = 0.5
+) -> np.ndarray:
+    """
+    Generate random samples from a bimodal Gaussian (mixture of two Gaussians).
+
+    Args:
+        mu1 (float): Mean of the first Gaussian.
+        sigma1 (float): Std dev of the first Gaussian.
+        mu2 (float): Mean of the second Gaussian.
+        sigma2 (float): Std dev of the second Gaussian.
+        weight (float): Probability of sampling from the first Gaussian (0 to 1).
+        size (int): Number of samples to generate.
+
+    Returns:
+        np.ndarray: Array of random samples from the bimodal distribution.
+    """
+    choices = np.random.rand(size) < weight
+    samples = np.empty(size)
+    samples[choices] = np.random.normal(mu1, sigma1, np.sum(choices))
+    samples[~choices] = np.random.normal(mu2, sigma2, np.sum(~choices))
+    return samples if size > 1 else samples[0]

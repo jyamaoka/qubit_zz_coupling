@@ -80,15 +80,15 @@ def setup_operators(
     sm_q2 = tensor(identity(2), sigmam(), identity(2))
     sm_tls = tensor(identity(2), identity(2), sigmam())
 
-    H_Q1 = -2 * np.pi * system_params["f_q1"] / 2 * sz_q1
-    H_Q2 = -2 * np.pi * system_params["f_q2"] / 2 * sz_q2
-    H_TLS = -2 * np.pi * system_params["f_tls"] / 2 * sz_tls
+    H_Q1 = (2 * np.pi * system_params["f_q1"]) / 2 * sz_q1 # must be positiv (+)
+    H_Q2 = (2 * np.pi * system_params["f_q2"]) / 2 * sz_q2
+    H_TLS = (2 * np.pi * system_params["f_tls"]) / 2 * sz_tls
 
     H_ZZ = 2 * np.pi * system_params["J_zz"] * sz_q1 * sz_q2
     H_Q1_TLS = 2 * np.pi * system_params["J_tls"] * sz_q1 * sz_tls
 
     if system_params["single"] :
-        H = H_Q1
+        H = H_Q1 + H_Q2 - H_ZZ
     else:
         H = H_Q1 + H_Q2 + H_TLS - H_ZZ - H_Q1_TLS
 
@@ -108,7 +108,7 @@ def setup_operators(
             np.sqrt(((1/system_params["T2"]["q1"]) -
                      (1/2/system_params["T1"]["q1"])) / 2) * sz_q1,
             np.sqrt(((1/system_params["T2"]["q2"]) -
-                     (1//2/system_params["T1"]["q2"])) / 2) * sz_q2,
+                     (1/2/system_params["T1"]["q2"])) / 2) * sz_q2,
             np.sqrt(((1/system_params["T2"]["tls"]) -
                      (1/2/system_params["T1"]["tls"])) / 2) * sz_tls
         ]
