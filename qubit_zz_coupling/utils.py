@@ -121,28 +121,22 @@ def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, floa
 def parse_omega(omega: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
     return parse_drive(omega)
 
-def sample_bimodal_gaussian(
-    mu1: float, sigma1: float,
-    mu2: float, sigma2: float,
-    size: int = 1,
-    weight: float = 0.5
-) -> np.ndarray:
+def load_from_file(filename: str) -> tuple:
     """
-    Generate random samples from a bimodal Gaussian (mixture of two Gaussians).
+    Load experiment data from a .npz file.
 
     Args:
-        mu1 (float): Mean of the first Gaussian.
-        sigma1 (float): Std dev of the first Gaussian.
-        mu2 (float): Mean of the second Gaussian.
-        sigma2 (float): Std dev of the second Gaussian.
-        weight (float): Probability of sampling from the first Gaussian (0 to 1).
-        size (int): Number of samples to generate.
+        filename (str): Path to the .npz file.
 
     Returns:
-        np.ndarray: Array of random samples from the bimodal distribution.
+        tuple: (expA_list, expB_list, T1_A_SAMPLE, T2_A_SAMPLE) if available,
+               otherwise (expA_list, expB_list, T1_A_SAMPLE).
     """
-    choices = np.random.rand(size) < weight
-    samples = np.empty(size)
-    samples[choices] = np.random.normal(mu1, sigma1, np.sum(choices))
-    samples[~choices] = np.random.normal(mu2, sigma2, np.sum(~choices))
-    return samples if size > 1 else samples[0]
+    # Load the data
+    data = np.load(filename)
+
+    # Access arrays by their keys
+    try:
+        return data["expA_list"], data["expB_list"], data["T1_A_SAMPLE"], data["T2_A_SAMPLE"]
+    except KeyError:
+        return data["expA_list"], data["expB_list"], data["T1_A_SAMPLE"]
