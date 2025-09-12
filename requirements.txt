@@ -6,3 +6,6 @@ numpy
 scipy
 tqdm
 pytest
+cython
+setuptools
+filelock
