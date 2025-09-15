@@ -2,6 +2,7 @@ from .utils import exp_decay, ramsey, make_population, fq_shift, f2w, parse_driv
 
 from qutip import (basis, tensor, sigmaz, sigmax, sigmam, mesolve, identity,
                    Qobj, expect)
+import qutip as qt
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit

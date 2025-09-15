@@ -202,3 +202,48 @@ def make_t2(t1, tphi):
     a = 1 / (2 * t1)
     b = 1 / tphi
     return 1 / (a + b)
+
+def sample_sine_curve(
+    time: float,
+    amplitude: float,
+    period: float,
+    offset: float,
+    phase: float,
+    num_points: int,
+    sigma: float,
+    plot: bool = False
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Generate points along a noisy sine curve and optionally plot it.
+
+    Args:
+        time (float): The maximum x value (end of the time axis).
+        amplitude (float): Amplitude of the sine wave.
+        period (float): The period of the sine wave.
+        offset (float): The vertical offset.
+        phase (float): The phase shift (in radians).
+        num_points (int): Number of points to generate.
+        sigma (float): Standard deviation of Gaussian noise to add.
+        plot (bool, optional): If True, plot the sine curve. Default is False.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Arrays of x and y values of the sine curve.
+    """
+    import numpy as np
+    x = np.linspace(0, time, num_points)
+    y = amplitude * np.sin(2 * np.pi * x / period + phase) + offset
+    if sigma > 0:
+        y += np.random.normal(0, sigma, size=y.shape)
+    if plot:
+        import matplotlib.pyplot as plt
+        # Ensure inline plotting for Jupyter
+        from IPython import get_ipython
+        ipython = get_ipython()
+        if ipython is not None:
+            ipython.run_line_magic('matplotlib', 'inline')
+        plt.plot(x, y, '.')
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.title("Sine Curve")
+        plt.show()
+    return x, y
