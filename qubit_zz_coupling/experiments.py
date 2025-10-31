@@ -48,13 +48,25 @@ class Ramsey_experiment_2q:
         self.nA, self.nB = qt.tensor(qt.num(2), I), qt.tensor(I, qt.num(2))
 
         # Collapse operators
-        def collapse_ops(self, T1: float, T2: float, sm_op: qt.Qobj, sz_op: qt.Qobj) -> list:
+        #def collapse_ops(self, T1: float, T2: float, sm_op: qt.Qobj, sz_op: qt.Qobj) -> list:
+        #    g1 = 1 / T1
+        #    gphi = max(0, 1 / T2 - g1 / 2)
+        #    return [np.sqrt(g1) * sm_op, np.sqrt(0.5 * gphi) * sz_op]
+
+        #self.c_ops = (self.collapse_ops(self.T1_A, self.T2_A, self.smA, self.szA) +
+        #              self.collapse_ops(self.T1_B, self.T2_B, self.smB, self.szB))
+        
+        # Collapse operators
+        def collapse_ops(T1: float, T2: float, sm_op: qt.Qobj, sz_op: qt.Qobj) -> list:
             g1 = 1 / T1
             gphi = max(0, 1 / T2 - g1 / 2)
             return [np.sqrt(g1) * sm_op, np.sqrt(0.5 * gphi) * sz_op]
 
-        self.c_ops = (self.collapse_ops(self.T1_A, self.T2_A, self.smA, self.szA) +
-                      self.collapse_ops(self.T1_B, self.T2_B, self.smB, self.szB))
+        self.c_ops: list = (
+            collapse_ops(self.T1_A, self.T2_A, self.smA, self.szA)
+            + collapse_ops(self.T1_B, self.T2_B, self.smB, self.szB)
+        )
+
         
         # Static Hamiltonian
         self.H0 = 0.5 * self.wA * self.szA + 0.5 * self.wB * self.szB + self.chi / 4 * self.szA * self.szB
