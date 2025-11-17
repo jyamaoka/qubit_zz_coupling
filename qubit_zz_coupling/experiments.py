@@ -20,18 +20,18 @@ class Ramsey_experiment_2q:
     """
 
     def __init__(self, params: dict):
-        self.fA: float = params['fA']
-        self.fB: float = params['fB']
-        self.detA: float = params['detA']
-        self.detB: float = params['detB']
-        self.T1_A: float = params['T1_A']
-        self.T1_B: float = params['T1_B']
-        self.T2_A: float = params['T2_A']
-        self.T2_B: float = params['T2_B']
+        self.fA: float = float(params['fA'])
+        self.fB: float = float(params['fB'])
+        self.detA: float = float(params['detA'])
+        self.detB: float = float(params['detB'])
+        self.T1_A: float = float(params['T1_A'])
+        self.T1_B: float = float(params['T1_B'])
+        self.T2_A: float = float(params['T2_A'])
+        self.T2_B: float = float(params['T2_B'])
         self.t_ns: np.ndarray = params['t_ns']
-        self.chi_MHz: float = params['chi_MHz']
-        self.evo_ver: int = params['evo_ver']
-        self.num_cpus: int = params.get('num_cpus', 1)
+        self.chi_MHz: float = float(params['chi_MHz'])
+        self.evo_ver: int = int(params['evo_ver'])
+        self.num_cpus: int = int(params.get('num_cpus', 1))
 
         # Derived quantities
         self.wA, self.wB = 2 * np.pi * np.array([self.fA, self.fB])
@@ -258,24 +258,24 @@ class Ramsey_experiment_2qtls:
     """
 
     def __init__(self, params: dict):
-        self.fA: float = params['fA']
-        self.fB: float = params['fB']
-        self.detA: float = params['detA']
-        self.detB: float = params['detB']
-        self.T1_A: float = params['T1_A']
-        self.T1_B: float = params['T1_B']
-        self.T2_A: float = params['T2_A']
-        self.T2_B: float = params['T2_B']
+        self.fA: float = float(params['fA'])
+        self.fB: float = float(params['fB'])
+        self.detA: float = float(params['detA'])
+        self.detB: float = float(params['detB'])
+        self.T1_A: float = float(params['T1_A'])
+        self.T1_B: float = float(params['T1_B'])
+        self.T2_A: float = float(params['T2_A'])
+        self.T2_B: float = float(params['T2_B'])
         self.t_ns: np.ndarray = params['t_ns']
-        self.chi_MHz: float = params['chi_MHz']
-        self.evo_ver: int = params['evo_ver']
-        self.num_cpus: int = params.get('num_cpus', 1)
+        self.chi_MHz: float = float(params['chi_MHz'])
+        self.evo_ver: int = int(params['evo_ver'])
+        self.num_cpus: int = int(params.get('num_cpus', 1))
 
         # TLS parameters
-        self.fT: float = params['fT']
-        self.T1_T: float = params['T1_T']
-        self.T2_T: float = params['T2_T']
-        self.chi_MHz_T: float = params['chi_MHz_T']
+        self.fT: float = float(params['fT'])
+        self.T1_T: float = float(params['T1_T'])
+        self.T2_T: float = float(params['T2_T'])
+        self.chi_MHz_T: float = float(params['chi_MHz_T'])
 
         # Derived quantities
         self.wA, self.wB, self.wT = 2 * np.pi * np.array([self.fA, self.fB, self.fT])

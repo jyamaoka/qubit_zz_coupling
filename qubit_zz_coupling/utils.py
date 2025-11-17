@@ -121,22 +121,18 @@ def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, floa
 def parse_omega(omega: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
     return parse_drive(omega)
 
-def load_from_file(filename: str) -> tuple:
+    
+def load_from_file(filename: str, fields: list) -> tuple:
     """
-    Load experiment data from a .npz file.
+    Load specified fields from a .npz file.
 
     Args:
         filename (str): Path to the .npz file.
+        fields (list): List of field names (keys) to extract from the file.
 
     Returns:
-        tuple: (expA_list, expB_list, T1_A_SAMPLE, T2_A_SAMPLE) if available,
-               otherwise (expA_list, expB_list, T1_A_SAMPLE).
+        tuple: Tuple containing the arrays corresponding to the requested fields, in the order provided.
+               If a field is missing, None is returned for that field.
     """
-    # Load the data
     data = np.load(filename)
-
-    # Access arrays by their keys
-    try:
-        return data["expA_list"], data["expB_list"], data["T1_A_SAMPLE"], data["T2_A_SAMPLE"]
-    except KeyError:
-        return data["expA_list"], data["expB_list"], data["T1_A_SAMPLE"]
+    return tuple(data[f] if f in data else None for f in fields)
