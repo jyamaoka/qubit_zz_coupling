@@ -121,28 +121,18 @@ def parse_drive(w_d: Union[float, list, Tuple[float,float]])-> Tuple[float, floa
 def parse_omega(omega: Union[float, list, Tuple[float,float]])-> Tuple[float, float]:
     return parse_drive(omega)
 
-def sample_bimodal_gaussian(
-    mu1: float, sigma1: float,
-    mu2: float, sigma2: float,
-    size: int = 1,
-    weight: float = 0.5
-) -> np.ndarray:
+    
+def load_from_file(filename: str, fields: list) -> tuple:
     """
-    Generate random samples from a bimodal Gaussian (mixture of two Gaussians).
+    Load specified fields from a .npz file.
 
     Args:
-        mu1 (float): Mean of the first Gaussian.
-        sigma1 (float): Std dev of the first Gaussian.
-        mu2 (float): Mean of the second Gaussian.
-        sigma2 (float): Std dev of the second Gaussian.
-        weight (float): Probability of sampling from the first Gaussian (0 to 1).
-        size (int): Number of samples to generate.
+        filename (str): Path to the .npz file.
+        fields (list): List of field names (keys) to extract from the file.
 
     Returns:
-        np.ndarray: Array of random samples from the bimodal distribution.
+        tuple: Tuple containing the arrays corresponding to the requested fields, in the order provided.
+               If a field is missing, None is returned for that field.
     """
-    choices = np.random.rand(size) < weight
-    samples = np.empty(size)
-    samples[choices] = np.random.normal(mu1, sigma1, np.sum(choices))
-    samples[~choices] = np.random.normal(mu2, sigma2, np.sum(~choices))
-    return samples if size > 1 else samples[0]
+    data = np.load(filename)
+    return tuple(data[f] if f in data else None for f in fields)

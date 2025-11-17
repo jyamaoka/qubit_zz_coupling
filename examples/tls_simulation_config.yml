@@ -1,0 +1,86 @@
+# Configuration for tls_simulation.ipynb
+
+# Note: sample_sine_curve is called in the notebook with positional args:
+#   sample_sine_curve(arg0, arg1, arg2, arg3, arg4, n_points, sigma, plot=...)
+
+sample_sine_curve:
+  args:
+    - 20          # time span 
+    - 0.3         # amplitude 
+    - 10          # period
+    - 0.4         # offset
+    - 0           # phase
+    - 30          # num_points (n_points)
+    - 0.01         # sigma (gaussian noise)
+  plot: true
+
+# If you run the loop version, you may override sample params per iteration:
+loop: 2
+
+# Global experiment settings
+experiment:
+  chi_MHz: 0.01
+  evo_ver: 2
+  name_str: "results_t2_jzz10_tls"
+  num_cpus: 90
+
+# time axis used for Ramsey experiments
+t_ns:
+  start: 0
+  stop: 100000
+  points: 146
+
+# qubit parameters (used when constructing params dict)
+qubits:
+  A:
+    f: 3.440e9
+    det: 3e6
+    T1: 150e-6
+    T2: 180e-6
+  B:
+    f: 3.330e9
+    det: 3e6
+    T1: 150e-6
+    T2: 180e-6
+
+# TLS (two-level system) parameters (chi_MHz_T is set per-sample from y)
+tls:
+  fT: 3.330e9
+  T1_T: 200e-6
+  T2_T: 210e-6
+  chi_MHz_T: null   # filled dynamically from sample y values during loop
+
+# I/O / saving
+save:
+  filename_pattern: "results_t1_{name_hint}_{ver_str}_{timestamp}_gphi.npz"
+  fields:
+    - expA_list
+    - expB_list
+    - x
+    - y
+    - t_ns
+
+# fitting / analysis defaults
+fitting:
+  bounds:
+    lower: [0, 0, 0, 0, -3.1416, -3.1416, 0, 0]
+    upper: [1, 1, 20e6, 20e6, 3.1416, 3.1416, 4e-4, 1]
+  maxfev: 50000
+  guess_function: "qubit_zz_coupling.models.guess_params_2a"
+
+# plotting defaults
+plot:
+  figsize: [10, 4]
+  t2_unit_scale: 1e6   # multiply T2 (s) by this for µs
+  hist_bins: 20
+
+# post-processing
+postproc:
+  clip_negative_y: true
+  chunk_size: 30
+  sample_stride: 1
+
+# metadata
+metadata:
+  created_by: "tls_simulation.ipynb"
+  created_on: null   # filled at runtime with timestamp
